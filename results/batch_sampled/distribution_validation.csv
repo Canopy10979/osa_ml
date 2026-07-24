@@ -1,0 +1,5 @@
+Dataset,Label,Meaning,Count,Percent
+Full,0,Awake,52,5.695509309967141
+Full,1,Sleep,861,94.30449069003286
+Batch-randomized sample,0,Awake,52,28.888888888888886
+Batch-randomized sample,1,Sleep,128,71.11111111111111
