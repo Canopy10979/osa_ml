@@ -1,0 +1,8 @@
+              precision    recall  f1-score   support
+
+      Normal     0.7345    0.8411    0.7842      6784
+       Apnea     0.8046    0.6827    0.7387      6502
+
+    accuracy                         0.7636     13286
+   macro avg     0.7695    0.7619    0.7614     13286
+weighted avg     0.7688    0.7636    0.7619     13286

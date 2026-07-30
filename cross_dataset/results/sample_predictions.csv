@@ -1,0 +1,4 @@
+HR_Mean,SpO2_Mean,Flow_Mean,Predicted_Label,Prediction,Probability_Class_0,Probability_Class_1,Probability_Class_0_Percent,Probability_Class_1_Percent
+75.0,95.0,0.02,0,Non-apnea-labeled window,0.65,0.35,65.0,35.0
+82.0,89.0,0.2,1,Apnea-labeled window,0.41,0.59,41.0,59.0
+68.0,97.0,-0.03,0,Non-apnea-labeled window,0.77,0.23,77.0,23.0

@@ -1,0 +1,13 @@
+{
+  "random_state": 42,
+  "window_seconds": 30,
+  "systematic_step": 5,
+  "test_size": 0.2,
+  "features": [
+    "HR_Mean",
+    "SpO2_Mean",
+    "Flow_Mean"
+  ],
+  "target": "Sleep_Label",
+  "target_definition": "0=awake, 1=asleep; derived from sleep stages, not apnea-event annotations"
+}

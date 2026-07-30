@@ -1,5 +1,0 @@
-Dataset,Rows,Class_0,Class_1,Positive_Fraction
-Full structured,913,52,861,0.9430449069003286
-Randomized every-fifth,183,15,168,0.9180327868852459
-Training,146,12,134,0.9178082191780822
-Testing,37,3,34,0.918918918918919

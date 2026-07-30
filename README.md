@@ -1,3 +1,46 @@
+# OSA ML
+
+Layout follows the `Output structure` section of [osa-ml-skill.md](osa-ml-skill.md).
+
+```
+OSA ML/
+├── common/                      # shared pipeline code (was scripts/)
+├── dataset_apnea_ecg/           # PhysioNet Apnea-ECG  — has real OSA labels
+├── dataset_ucddb/               # UCD Sleep Apnea DB   — demographics only
+├── dataset_bioradiolocation/    # Sleep Bioradiolocation — ZERO OSA cases
+│   └── {raw,structured,models,results}/ + report.md
+├── cross_dataset/               # prior run variants + comparative outputs
+├── validation/                  # block cross-validation
+├── FINAL_REPORT.md
+└── README.md
+```
+
+Datasets are split **by raw source**. The pre-existing `results/` and `models/`
+were pipeline *run variants* (`regenerated`, `batch_sampled`, `balanced_models`,
+`block_cross_validation`) rather than per-dataset outputs, so they live in
+`cross_dataset/` and `validation/`; the `dataset_*/results/` folders are empty
+until the pipeline is re-run scoped to one dataset.
+
+## Raw data is not tracked
+
+Each `dataset_*/raw/` has a `.gitignore` that ignores everything but itself and
+a provenance `README.md`. Note that `dataset_apnea_ecg/raw/` was committed
+before this rule existed, so those files remain in the index and in history —
+`.gitignore` only affects untracked files.
+
+## Label availability (read before modelling)
+
+| Dataset | OSA label? |
+|---|---|
+| apnea_ecg | **Yes** — record prefix `a*`=apnea, `b*`=borderline, `c*`=control |
+| ucddb | Demographics only |
+| bioradiolocation | **No** — all 32 subjects have AHI ≤ 4.9, below the AHI ≥ 5 threshold |
+
+---
+
+<details>
+<summary>Previous README</summary>
+
 # Sleep Apnea Detection Using Machine Learning
 
 ## Overview
@@ -117,3 +160,5 @@ Potential improvements include:
 - Real-time monitoring
 - Larger datasets
 - External validation
+
+</details>
