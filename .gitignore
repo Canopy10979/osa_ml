@@ -6,3 +6,8 @@ __pycache__/
 *.log
 .ipynb_checkpoints/
 .DS_Store
+
+# Ignore raw dataset files while preserving raw directory metadata
+**/raw/*
+!**/raw/.gitignore
+!**/raw/README.md
