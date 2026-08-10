@@ -8,8 +8,9 @@ license: Proprietary
 
 Turn a folder/zip of raw files into a validated, reproducible binary-classification study:
 **extract → structure → engineer → train 3 models → evaluate → infer → cross-validate the
-analysis itself.** Built for OSA (obstructive sleep apnea) vs. non-OSA, but the label is a
-parameter — it works for any two-class target across several discrete datasets.
+analysis itself → refresh the results dashboard.** Built for OSA (obstructive sleep apnea) vs.
+non-OSA, but the label is a parameter — it works for any two-class target across several
+discrete datasets.
 
 ## Operating principles (non-negotiable)
 
@@ -90,6 +91,35 @@ calibration curve. **Lead with recall and PR-AUC** — a missed OSA case is the 
 - Cross-dataset generalization: train on one, test on another where schemas align.
 - Write `validation/leakage_audit.md` and `validation/seed_variance.md`.
 
+### Stage 7 — Update the results dashboard (always the final step)
+Refresh `results_dashboard.html` at the project root so it summarizes **every** dataset
+analyzed to date — newly added ones and any that already existed. Never delete or overwrite
+a previously analyzed dataset's section just because this run did not touch it; the dashboard
+is cumulative.
+
+- **Build it with the `web-artifacts-builder` skill.** Single self-contained HTML file, no
+  external dependencies, Clawpilot theme variables and theme-detection script included.
+- **Verdict strip at the top:** one clickable card per dataset with a plain-language status
+  — ✅ real result / ⚠️ caveated or mislabeled / ❌ unusable — and a one-line reason.
+- **One section per dataset**, each containing:
+  - Headline stats (subjects, observations, class balance, best metric).
+  - Performance bars on a common 0–1 scale with the chance/majority baseline marked, so an
+    apparently high score is visibly compared against doing nothing.
+  - Diverging correlation bars for the top features (sign preserved — negative and positive
+    correlations must look different).
+  - Correlation **vs.** importance side by side when they disagree; that disagreement is
+    often the most important finding on the page.
+  - Callout boxes for the honest caveats: leakage findings, subject-identity inflation,
+    tiny or absent control groups, missing raw data, mislabeled targets.
+- **Every number must come from a saved artifact** (`results/metrics.json`,
+  `feature_importance.csv`, `validation/*.md`) — same rule as the written report.
+- **Datasets that produced no valid result still get a section** explaining why (no positive
+  cases, data never downloaded, undefined label). An absent dataset looks like an oversight;
+  an explained one is a finding.
+- Close with a bottom-line sentence naming which datasets actually support a claim.
+- **Checkpoint:** every folder matching `dataset_*/` plus `cross_dataset/` appears in the
+  dashboard, and each rendered figure traces to a file on disk.
+
 ## Output structure
 
 ```
@@ -108,6 +138,7 @@ OSA-ML/
 │   └── report.md
 ├── cross_dataset/          # comparative analysis
 ├── validation/             # seed variance, shuffle test, leakage audit
+├── results_dashboard.html  # cumulative visual summary of ALL datasets (Stage 7)
 ├── FINAL_REPORT.md
 └── README.md               # how to reproduce: env, versions, seeds, commands
 ```
