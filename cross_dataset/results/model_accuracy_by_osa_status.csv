@@ -1,4 +1,0 @@
-Model,Without OSA Accuracy,With OSA Accuracy,True 0 Samples,True 1 Samples,TN,FP,FN,TP
-Logistic Regression,0.9,0.8497109826589595,10,173,9,1,26,147
-Random Forest,0.8,0.9595375722543352,10,173,8,2,7,166
-Decision Tree,0.8,0.9653179190751445,10,173,8,2,6,167
