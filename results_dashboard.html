@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OSA Detection — Dataset Findings</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 32px 20px 64px;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1120px; margin: 0 auto; }
+
+header.page { margin-bottom: 28px; }
+header.page h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+header.page p {
+  margin: 0;
+  color: var(--cp-text-muted);
+  font-size: 15px;
+  max-width: 72ch;
+}
+
+/* ---------- verdict summary strip ---------- */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin: 24px 0 36px;
+}
+.sum-card {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+  border-left: 4px solid var(--cp-border-strong);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.sum-card:hover { transform: translateY(-2px); }
+.sum-card.ok    { border-left-color: var(--cp-success); }
+.sum-card.bad   { border-left-color: var(--cp-danger); }
+.sum-card.warn  { border-left-color: var(--cp-warning); }
+.sum-card .name { font-size: 13px; font-family: Consolas, "Courier New", Courier, monospace; color: var(--cp-text-muted); }
+.sum-card .verd { font-size: 17px; font-weight: 650; margin-top: 2px; }
+.sum-card .why  { font-size: 12.5px; color: var(--cp-text-soft); margin-top: 4px; }
+
+/* ---------- dataset cards ---------- */
+.card {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px 26px 26px;
+  margin-bottom: 26px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+  scroll-margin-top: 16px;
+}
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.card-head h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-family: Consolas, "Courier New", Courier, monospace;
+}
+.subtitle { color: var(--cp-text-muted); font-size: 14.5px; margin: 2px 0 18px; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.badge.ok   { background: rgba(22,163,74,0.13);  color: var(--cp-success); }
+.badge.bad  { background: rgba(220,38,38,0.13);  color: var(--cp-danger); }
+.badge.warn { background: rgba(245,158,11,0.16); color: var(--cp-warning); }
+
+/* ---------- stat pills ---------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.stat {
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.stat .v { font-size: 20px; font-weight: 650; letter-spacing: -0.02em; }
+.stat .l { font-size: 11.5px; color: var(--cp-text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 1px; }
+
+/* ---------- section blocks ---------- */
+.block { margin-top: 22px; }
+.block h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cp-text-muted);
+  font-weight: 650;
+}
+
+/* ---------- score bars (0..1 scale) ---------- */
+.score-row {
+  display: grid;
+  grid-template-columns: 190px 1fr 58px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 9px;
+  font-size: 13.5px;
+}
+.score-row .lbl { color: var(--cp-text); }
+.score-row .lbl small { display: block; color: var(--cp-text-soft); font-size: 11.5px; }
+.track {
+  position: relative;
+  height: 18px;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.fill { height: 100%; border-radius: 999px; transition: width 0.7s cubic-bezier(.2,.8,.2,1); }
+.fill.accent  { background: var(--cp-accent); }
+.fill.success { background: var(--cp-success); }
+.fill.muted   { background: var(--cp-border-strong); }
+.fill.warn    { background: var(--cp-warning); }
+.fill.danger  { background: var(--cp-danger); }
+.score-row .num { text-align: right; font-family: Consolas, "Courier New", Courier, monospace; font-size: 13px; font-weight: 600; }
+.chance-mark {
+  position: absolute; top: -2px; bottom: -2px; width: 2px;
+  background: var(--cp-text); opacity: 0.45;
+}
+
+/* ---------- correlation diverging bars ---------- */
+.corr-row {
+  display: grid;
+  grid-template-columns: 190px 1fr 58px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 9px;
+  font-size: 13.5px;
+}
+.corr-track {
+  position: relative;
+  height: 20px;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.corr-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--cp-border-strong); }
+.corr-bar { position: absolute; top: 3px; bottom: 3px; border-radius: 3px; transition: width 0.7s cubic-bezier(.2,.8,.2,1); }
+.corr-bar.neg { background: var(--cp-accent); }
+.corr-bar.pos { background: var(--cp-link); }
+.corr-axis {
+  display: grid; grid-template-columns: 190px 1fr 58px; gap: 12px;
+  font-size: 11px; color: var(--cp-text-soft); margin-top: 4px;
+}
+.corr-axis .ends { display: flex; justify-content: space-between; }
+
+/* ---------- cohort stacked bar ---------- */
+.cohort { display: flex; height: 32px; border-radius: 8px; overflow: hidden; border: 1px solid var(--cp-border); }
+.cohort div {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 650; color: var(--cp-accent-fg);
+  min-width: 0; overflow: hidden; white-space: nowrap;
+}
+.seg-osa    { background: var(--cp-accent); }
+.seg-none   { background: var(--cp-border-strong); }
+.legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12.5px; color: var(--cp-text-muted); flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* ---------- callouts ---------- */
+.note {
+  border-left: 3px solid var(--cp-border-strong);
+  background: var(--cp-surface-soft);
+  border-radius: 0 10px 10px 0;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  margin-top: 12px;
+  color: var(--cp-text);
+}
+.note strong { display: block; margin-bottom: 3px; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+.note.good  { border-left-color: var(--cp-success); }
+.note.good strong  { color: var(--cp-success); }
+.note.bad   { border-left-color: var(--cp-danger); }
+.note.bad strong   { color: var(--cp-danger); }
+.note.warn  { border-left-color: var(--cp-warning); }
+.note.warn strong  { color: var(--cp-warning); }
+
+code {
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.92em;
+  background: var(--cp-accent-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ---------- AHI scale ---------- */
+.ahi-scale { position: relative; height: 40px; margin: 18px 0 6px; }
+.ahi-bar {
+  position: absolute; left: 0; right: 0; top: 14px; height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+    var(--cp-border-strong) 0%, var(--cp-border-strong) 5%,
+    var(--cp-warning) 5%, var(--cp-warning) 15%,
+    var(--cp-accent) 15%, var(--cp-accent) 30%,
+    var(--cp-danger) 30%, var(--cp-danger) 100%);
+  opacity: 0.35;
+}
+.ahi-tick { position: absolute; top: 0; transform: translateX(-50%); text-align: center; font-size: 11px; color: var(--cp-text-soft); }
+.ahi-tick i { display: block; width: 1px; height: 10px; background: var(--cp-border-strong); margin: 2px auto 0; font-style: normal; }
+.ahi-marker {
+  position: absolute; top: 8px; transform: translateX(-50%);
+  width: 14px; height: 24px; border-radius: 4px;
+  background: var(--cp-accent); border: 2px solid var(--cp-surface);
+}
+.ahi-marker.grey { background: var(--cp-border-strong); }
+
+/* ---------- importance vs correlation grid ---------- */
+.imp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.imp-cell {
+  border: 1px solid var(--cp-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--cp-surface-soft);
+}
+.imp-cell .feat { font-family: Consolas, "Courier New", Courier, monospace; font-weight: 650; font-size: 14px; }
+.imp-cell .desc { font-size: 12.5px; color: var(--cp-text-soft); margin: 2px 0 10px; }
+.mini { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-top: 6px; }
+.mini .mlbl { width: 92px; color: var(--cp-text-muted); }
+.mini .mtrack { flex: 1; height: 10px; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 999px; overflow: hidden; }
+.mini .mfill { height: 100%; border-radius: 999px; }
+.mini .mnum { width: 50px; text-align: right; font-family: Consolas, "Courier New", Courier, monospace; font-weight: 600; }
+
+footer.page { color: var(--cp-text-soft); font-size: 12.5px; margin-top: 34px; text-align: center; }
+
+@media (max-width: 640px) {
+  .score-row, .corr-row, .corr-axis { grid-template-columns: 128px 1fr 46px; font-size: 12.5px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>Can a machine detect sleep apnea?</h1>
+  <p>Four datasets were run through the same pipeline. Only one produced a real, defensible answer. This dashboard shows what each dataset could and could not support, and which physiological signals actually drove the predictions.</p>
+</header>
+
+<!-- SUMMARY STRIP -->
+<div class="summary">
+  <a class="sum-card ok" href="#d1" style="text-decoration:none;color:inherit;display:block">
+    <div class="name">dataset_apnea_ecg</div>
+    <div class="verd">✅ Real result</div>
+    <div class="why">AUC 0.838 vs 0.489 chance — survives every sanity check</div>
+  </a>
+  <a class="sum-card bad" href="#d2" style="text-decoration:none;color:inherit;display:block">
+    <div class="name">dataset_bioradiolocation</div>
+    <div class="verd">❌ No OSA present</div>
+    <div class="why">Max AHI is 4.9 — nobody in the cohort has OSA</div>
+  </a>
+  <a class="sum-card bad" href="#d3" style="text-decoration:none;color:inherit;display:block">
+    <div class="name">dataset_ucddb</div>
+    <div class="verd">❌ Data missing</div>
+    <div class="why">Right patients, but recordings were never downloaded</div>
+  </a>
+  <a class="sum-card warn" href="#d4" style="text-decoration:none;color:inherit;display:block">
+    <div class="name">cross_dataset</div>
+    <div class="verd">⚠️ Mislabeled</div>
+    <div class="why">97% "OSA" accuracy is actually asleep-vs-awake</div>
+  </a>
+</div>
+
+
+<!-- ============ DATASET 1 ============ -->
+<section class="card" id="d1">
+  <div class="card-head">
+    <h2>1 · dataset_apnea_ecg</h2>
+    <span class="badge ok">✅ The real result</span>
+  </div>
+  <p class="subtitle">27 people, one night each. An expert scored every single minute as “apnea” or “normal.” The question: can a computer tell which minutes were apneas from heartbeat alone?</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">27</div><div class="l">Subjects</div></div>
+    <div class="stat"><div class="v">13,286</div><div class="l">Labeled minutes</div></div>
+    <div class="stat"><div class="v">0.838</div><div class="l">Best AUC</div></div>
+    <div class="stat"><div class="v">&lt;0.005</div><div class="l">Seed variance</div></div>
+  </div>
+
+  <div class="block">
+    <h3>How well does it perform? (0.5 = coin flip)</h3>
+    <div class="score-row">
+      <div class="lbl">XGBoost <small>full feature set</small></div>
+      <div class="track"><div class="fill accent" style="width:83.8%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.838</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl"><code>r_hf</code> alone <small>one single feature</small></div>
+      <div class="track"><div class="fill success" style="width:79.3%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.793</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Shuffled labels <small>cheating check</small></div>
+      <div class="track"><div class="fill muted" style="width:48.9%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.489</div>
+    </div>
+    <div class="note good">
+      <strong>Why this is trustworthy</strong>
+      Scrambling the answers collapsed performance to chance (0.489) — the model wasn’t memorizing leaked information. Re-running with different random seeds moved the score by less than 0.005. The gap between 0.838 and 0.489 is large and real.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>The headline correlation</h3>
+    <div class="corr-row">
+      <div class="lbl"><code>r_hf</code> <small>breathing-linked heart rate swing</small></div>
+      <div class="corr-track"><div class="corr-zero"></div><div class="corr-bar neg" style="right:50%;width:23%"></div></div>
+      <div class="num">−0.46</div>
+    </div>
+    <div class="corr-axis"><div></div><div class="ends"><span>−1.0 (predicts apnea)</span><span>0</span><span>+1.0 (predicts normal)</span></div><div></div></div>
+    <div class="note good">
+      <strong>What r_hf means in plain terms</strong>
+      Your heart normally speeds up and slows down in rhythm with your breathing. In healthy sleep that fluctuation is strong. <em>During apnea minutes it collapses.</em> That single measurement alone reaches 0.793 — nearly the whole model — and its negative sign points exactly the direction physiology says it should. This is a genuine biological signal, not a statistical artifact.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>The honest catch — where the skill actually comes from</h3>
+    <div class="score-row">
+      <div class="lbl">Real event detection <small>spotting individual apneas</small></div>
+      <div class="track"><div class="fill accent" style="width:60%"></div></div>
+      <div class="num">~60%</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Subject recognition <small>“this person is a severe apneic”</small></div>
+      <div class="track"><div class="fill warn" style="width:40%"></div></div>
+      <div class="num">~40%</div>
+    </div>
+    <div class="note warn">
+      <strong>Inflated headline</strong>
+      About 40% of the model’s apparent skill is just recognizing <em>who the person is</em> and riding their overall severity — not spotting individual events. True per-event detection skill is meaningfully smaller than 0.838 suggests.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>It can grade severity — it cannot rule OSA out</h3>
+    <div class="cohort">
+      <div class="seg-osa"  style="flex:23">23 with OSA</div>
+      <div class="seg-none" style="flex:4">4 without</div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--cp-accent)"></i> Has OSA — 23 of 27</span>
+      <span><i class="dot" style="background:var(--cp-border-strong)"></i> No OSA — 4 of 27 (only 2 true healthy controls)</span>
+    </div>
+    <div class="note bad">
+      <strong>The blind spot</strong>
+      The model correctly identified only <strong>1 of the 4</strong> non-OSA people. With just 2 genuine healthy controls in the whole cohort, it never learned what “healthy” looks like. Useful for <em>grading severity in people who already have OSA</em>; near-useless for telling a healthy person they are fine.
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ DATASET 2 ============ -->
+<section class="card" id="d2">
+  <div class="card-head">
+    <h2>2 · dataset_bioradiolocation</h2>
+    <span class="badge bad">❌ The question is undefined</span>
+  </div>
+  <p class="subtitle">32 people, 1.6 GB of radar sleep recordings. Every subject’s AHI (the standard OSA severity score) was checked.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">32</div><div class="l">Subjects</div></div>
+    <div class="stat"><div class="v">1.6 GB</div><div class="l">Radar data</div></div>
+    <div class="stat"><div class="v">4.9</div><div class="l">Highest AHI</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">People with OSA</div></div>
+  </div>
+
+  <div class="block">
+    <h3>Where this cohort sits on the OSA severity scale</h3>
+    <div class="ahi-scale">
+      <div class="ahi-bar"></div>
+      <div class="ahi-tick" style="left:0%">0<i></i></div>
+      <div class="ahi-tick" style="left:12.5%">5<i></i></div>
+      <div class="ahi-tick" style="left:37.5%">15<i></i></div>
+      <div class="ahi-tick" style="left:75%">30<i></i></div>
+      <div class="ahi-tick" style="left:100%">40+<i></i></div>
+      <div class="ahi-marker grey" style="left:12.25%" title="Highest AHI in dataset = 4.9"></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--cp-border-strong)"></i> Entire cohort sits left of the OSA threshold (AHI 5)</span>
+    </div>
+    <div class="note bad">
+      <strong>Not “too little data” — no data</strong>
+      The highest AHI in the entire dataset is <strong>4.9</strong>, just under the diagnostic cutoff of 5. Not one person qualifies as having OSA. Any model built here would be comparing healthy people to healthy people. No results exist because none should.
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ DATASET 3 ============ -->
+<section class="card" id="d3">
+  <div class="card-head">
+    <h2>3 · dataset_ucddb</h2>
+    <span class="badge bad">❌ Right patients, missing data</span>
+  </div>
+  <p class="subtitle">25 people with genuinely severe OSA — exactly the population you would want. But the actual sleep recordings were never fetched.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">25</div><div class="l">Subjects</div></div>
+    <div class="stat"><div class="v">16</div><div class="l">Median AHI</div></div>
+    <div class="stat"><div class="v">91</div><div class="l">Max AHI</div></div>
+    <div class="stat"><div class="v">12 KB</div><div class="l">Data downloaded</div></div>
+  </div>
+
+  <div class="block">
+    <h3>Severity profile — this is the population you want</h3>
+    <div class="ahi-scale">
+      <div class="ahi-bar"></div>
+      <div class="ahi-tick" style="left:0%">0<i></i></div>
+      <div class="ahi-tick" style="left:5.5%">5<i></i></div>
+      <div class="ahi-tick" style="left:16.5%">15<i></i></div>
+      <div class="ahi-tick" style="left:33%">30<i></i></div>
+      <div class="ahi-tick" style="left:100%">91<i></i></div>
+      <div class="ahi-marker" style="left:17.6%" title="Median AHI = 16"></div>
+      <div class="ahi-marker" style="left:100%" title="Max AHI = 91"></div>
+    </div>
+    <div class="note bad">
+      <strong>Nothing to analyze</strong>
+      Only the spreadsheet was downloaded. <code>raw/</code> contains a single 12 KB file of heights, weights and ages — the polysomnography recordings themselves were never fetched.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Class balance depends entirely on the threshold you pick</h3>
+    <div style="font-size:12.5px;color:var(--cp-text-muted);margin-bottom:6px">Standard threshold — AHI ≥ 5</div>
+    <div class="cohort">
+      <div class="seg-osa"  style="flex:24">24 with OSA</div>
+      <div class="seg-none" style="flex:1"></div>
+    </div>
+    <div style="font-size:12.5px;color:var(--cp-text-muted);margin:16px 0 6px">Moderate threshold — AHI ≥ 15</div>
+    <div class="cohort">
+      <div class="seg-osa"  style="flex:14">14 moderate+</div>
+      <div class="seg-none" style="flex:11">11 mild/none</div>
+    </div>
+    <div class="note warn">
+      <strong>Only fair at the moderate cutoff</strong>
+      At the standard threshold you would be comparing 24 people against 1 — statistically meaningless. It only becomes a fair fight at AHI ≥ 15, which splits the cohort 14 vs 11.
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ DATASET 4 ============ -->
+<section class="card" id="d4">
+  <div class="card-head">
+    <h2>4 · cross_dataset</h2>
+    <span class="badge warn">⚠️ Mislabeled — this is not OSA</span>
+  </div>
+  <p class="subtitle">The most impressive-looking numbers in the whole project: 97% accuracy, Random Forest with recall 1.0, and a file literally named <code>model_accuracy_by_osa_status.csv</code>. None of it is about OSA.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">1</div><div class="l">Person</div></div>
+    <div class="stat"><div class="v">925</div><div class="l">Windows, one night</div></div>
+    <div class="stat"><div class="v">97%</div><div class="l">Claimed accuracy</div></div>
+    <div class="stat"><div class="v">0.698</div><div class="l">Balanced accuracy</div></div>
+  </div>
+
+  <div class="note bad">
+    <strong>What it is actually predicting</strong>
+    The target column is <code>Sleep_Label</code>, and the generating code says so outright — <code>regenerate_pipeline.py:121</code> labels the axis “Sleep_Label (0 = awake, 1 = asleep).” The source file is a sleep-<em>stage</em> scoring sheet (W, N1, N2, N3, R). It is an <strong>asleep-vs-awake classifier that was relabeled as an OSA detector</strong>.
+  </div>
+
+  <div class="block">
+    <h3>Problem 1 — the 97% is an illusion</h3>
+    <div class="score-row">
+      <div class="lbl">Reported accuracy</div>
+      <div class="track"><div class="fill warn" style="width:97%"></div></div>
+      <div class="num">0.97</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Guess “asleep” every time <small>majority class</small></div>
+      <div class="track"><div class="fill muted" style="width:94%"></div></div>
+      <div class="num">0.94</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Balanced accuracy <small>the fair measure</small></div>
+      <div class="track"><div class="fill danger" style="width:69.8%"></div></div>
+      <div class="num">0.698</div>
+    </div>
+    <div class="note warn">
+      <strong>Barely better than doing nothing</strong>
+      94% of the windows are “asleep,” so a model that always answers “asleep” already scores 94%. The honest number, reported in the same folder, is <strong>0.698</strong>.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Problem 2 — the correlations prove it isn’t OSA</h3>
+    <div class="imp-grid">
+      <div class="imp-cell">
+        <div class="feat">Heart rate</div>
+        <div class="desc">Drops naturally when you fall asleep — 72 bpm awake → 61 bpm asleep</div>
+        <div class="mini"><span class="mlbl">Correlation</span><span class="mtrack"><span class="mfill" style="width:41%;background:var(--cp-accent)"></span></span><span class="mnum">−0.41</span></div>
+        <div class="mini"><span class="mlbl">Importance</span><span class="mtrack"><span class="mfill" style="width:44.5%;background:var(--cp-accent)"></span></span><span class="mnum">0.445</span></div>
+      </div>
+      <div class="imp-cell">
+        <div class="feat">SpO₂ (blood oxygen)</div>
+        <div class="desc">The defining sign of apnea — and the model ignores it entirely</div>
+        <div class="mini"><span class="mlbl">Correlation</span><span class="mtrack"><span class="mfill" style="width:6.6%;background:var(--cp-border-strong)"></span></span><span class="mnum">0.066</span></div>
+        <div class="mini"><span class="mlbl">Importance</span><span class="mtrack"><span class="mfill" style="width:0.5%;background:var(--cp-border-strong)"></span></span><span class="mnum">0.002</span></div>
+      </div>
+    </div>
+    <div class="note bad">
+      <strong>The smoking gun</strong>
+      A real OSA model would lean heavily on oxygen desaturation. This one gives SpO₂ an importance of <strong>0.0019 — essentially zero</strong> — while heart rate does nearly all the work. That is exactly the signature of a sleep detector, not an apnea detector.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Problem 3 — one person, one night</h3>
+    <div class="cohort">
+      <div class="seg-osa" style="flex:1">1 subject · 1 recording · 925 windows</div>
+    </div>
+    <div class="note warn">
+      <strong>Zero ability to generalize</strong>
+      Everything the model learned came from a single recording of a single individual. It cannot be expected to transfer to anyone else.
+    </div>
+  </div>
+</section>
+
+<footer class="page">
+  Bottom line: <strong>dataset_apnea_ecg</strong> is the only dataset that supports an OSA claim — and even there the headline is inflated by subject identity and it cannot rule OSA out. The other three are undefined, empty, or measuring the wrong thing.
+</footer>
+
+</div>
+</body>
+</html>
