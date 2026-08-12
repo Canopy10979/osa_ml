@@ -1,0 +1,38 @@
+==============================================================================
+STAGE 3-4 — MODELS (dataset_apnea_hrv)
+==============================================================================
+30,445 minutes | 77 subjects | 51 features
+class balance: 22.145% apnoea  (majority baseline accuracy 0.7786)
+CV: StratifiedGroupKFold(5) grouped by subject — every subject held out exactly once.
+
+-- out-of-fold (grouped by subject) --
+  LogisticRegression_L2    recall=0.755  PR-AUC=0.6812  ROC-AUC=0.8574  (2s)
+  LogisticRegression_L1    recall=0.752  PR-AUC=0.6805  ROC-AUC=0.8565  (90s)
+  RandomForest             recall=0.451  PR-AUC=0.6755  ROC-AUC=0.8596  (34s)
+  XGBoost                  recall=0.646  PR-AUC=0.6832  ROC-AUC=0.8650  (7s)
+
+  best by PR-AUC: XGBoost
+  majority baseline: accuracy=0.7786 PR-AUC=0.2214
+
+-- official L/T holdout (train on L subjects, test on T subjects) --
+  LogisticRegression_L2    recall=0.810  PR-AUC=0.7028  ROC-AUC=0.8578
+  LogisticRegression_L1    recall=0.809  PR-AUC=0.7039  ROC-AUC=0.8581
+  RandomForest             recall=0.424  PR-AUC=0.6456  ROC-AUC=0.8338
+  XGBoost                  recall=0.552  PR-AUC=0.6634  ROC-AUC=0.8421
+
+-- feature importance --
+     feature  lr_coef  lr_odds_ratio  rf_impurity  rf_permutation  xgb_gain
+ r_cvhr_ctx5   1.4226         4.1479       0.0889          0.0383    0.1331
+     peak_hz   0.1149         1.1217       0.0277          0.0042    0.0554
+ r_cvhr_ctx2  -0.2201         0.8024       0.0536          0.0031    0.0431
+   r_hf_ctx2   0.4545         1.5753       0.0390          0.0017    0.0362
+hr_mean_ctx5   2.6811        14.6011       0.0245          0.0015    0.0349
+   r_hf_ctx1  -1.0618         0.3458       0.0308          0.0012    0.0341
+        p_lf   0.1324         1.1416       0.0165          0.0012    0.0337
+      p_cvhr  -0.1532         0.8580       0.0273          0.0020    0.0316
+   r_hf_ctx5  -0.4987         0.6073       0.0397          0.0029    0.0248
+     hr_mean  -1.6999         0.1827       0.0171          0.0008    0.0232
+hr_mean_ctx1  -1.8323         0.1600       0.0183          0.0007    0.0229
+       rr_cv  -0.3330         0.7167       0.0126          0.0005    0.0207
+
+SHAP not installed — XGB gain + RF permutation importance reported instead.

@@ -1,0 +1,87 @@
+==============================================================================
+STAGE 5 — CORRELATION, INFERENCE, SUBJECT-LEVEL OSA
+==============================================================================
+best model by PR-AUC: XGBoost (PR-AUC=0.6832, ROC-AUC=0.8650)
+
+VIF among the 15 most important features (>10 = heavy collinearity):
+     feature     vif
+hr_mean_ctx1 8923.62
+hr_mean_ctx2 8250.56
+     hr_mean 1722.80
+hr_mean_ctx5  626.66
+   r_hf_ctx2  151.65
+   r_hf_ctx1   80.61
+   r_hf_ctx5   33.93
+ r_cvhr_ctx2   12.64
+ r_cvhr_ctx5   11.93
+  rmssd_ctx1    4.40
+       rr_cv    4.00
+        p_lf    3.14
+      p_cvhr    3.01
+     peak_hz    2.10
+cvhr_peak_hz    1.09
+  features with VIF > 10: 9 / 15
+
+Model agreement (Pearson r between predicted probabilities):
+                         p_LogisticRegression_L2  p_LogisticRegression_L1  p_RandomForest  p_XGBoost
+p_LogisticRegression_L2                    1.000                    0.999           0.791      0.794
+p_LogisticRegression_L1                    0.999                    1.000           0.791      0.794
+p_RandomForest                             0.791                    0.791           1.000      0.925
+p_XGBoost                                  0.794                    0.794           0.925      1.000
+
+------------------------------------------------------------------------------
+SUBJECT-LEVEL OSA — 40 controls vs 37 patients
+------------------------------------------------------------------------------
+Per-minute out-of-fold predictions are pooled per subject into an estimated
+apnoea index (predicted apnoea minutes per hour). Every subject was held out
+when its minutes were predicted, so no subject saw its own data in training.
+
+AI estimation: Pearson r=0.884 (p=1.8e-26)  Spearman r=0.777  MAE=5.89 events/h
+
+OSA classification at predicted-index threshold 9.5:
+  accuracy=0.896  balanced_accuracy=0.896
+  sensitivity=0.892  specificity=0.900
+  ROC-AUC of the predicted index as a ranking score = 0.9372
+  confusion (rows=true CONTROL/APNEA, cols=pred):
+[[36  4]
+ [ 4 33]]
+  misclassified subjects: 8 -> ['APN010', 'APN012', 'APN031', 'APN036', 'CON003', 'CON012', 'CON013', 'CON028']
+
+  On the official T subjects only (n=39): ROC-AUC=0.9211, balanced_acc=0.922
+
+Group separation of the ESTIMATED index:
+         count   mean   min    max
+group                             
+APNEA     37.0  27.31  1.21  59.83
+CONTROL   40.0   4.97  0.00  21.37
+
+==============================================================================
+STAGE 6 — VALIDATING THE ANALYSIS ITSELF
+==============================================================================
+
+6a. LABEL-SHUFFLE TEST — performance must collapse to chance.
+  global shuffle           PR-AUC=0.2193 (chance=0.2214)  ROC-AUC=0.4949 (chance=0.5)
+  within-subject shuffle   PR-AUC=0.4301 (chance=0.2214)  ROC-AUC=0.7171 (chance=0.5)
+  real labels              PR-AUC=0.6832  ROC-AUC=0.8650
+  VERDICT (global shuffle): PASS — collapses to chance, no leakage.
+  DIAGNOSTIC (within-subject shuffle): ROC-AUC=0.7171
+    -> ~59% of skill above chance is between-subject (who the person is)
+       rather than telling apnoeic from normal minutes WITHIN a subject.
+
+6b. SEED VARIANCE
+  seed=   42 PR-AUC=0.6832 ROC-AUC=0.8650 recall=0.6462 (6s)
+  seed=    7 PR-AUC=0.6744 ROC-AUC=0.8569 recall=0.6304 (6s)
+  seed= 2024 PR-AUC=0.6726 ROC-AUC=0.8562 recall=0.6237 (6s)
+  PR-AUC  mean=0.6767 sd=0.0057
+  ROC-AUC mean=0.8593 sd=0.0049
+
+6c. PER-SUBJECT FAILURE ANALYSIS
+  per-subject accuracy: mean=0.827 sd=0.118 min=0.550
+  worst 5 subjects:
+subject group  n_min  apnea_rate  recall  accuracy  roc_auc
+ APN036 APNEA    211       0.488   0.107     0.550    0.804
+ APN035 APNEA    235       0.753   0.542     0.557    0.625
+ APN015 APNEA    219       0.749   0.561     0.584    0.646
+ APN021 APNEA    408       0.581   0.401     0.586    0.803
+ APN031 APNEA    248       0.403   0.050     0.617    0.799
+  accuracy vs subject apnoea rate: Spearman r=-0.633 p=6.77e-10

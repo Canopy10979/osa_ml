@@ -11,3 +11,10 @@ __pycache__/
 **/raw/*
 !**/raw/.gitignore
 !**/raw/README.md
+
+# Large regenerable artifacts: model binaries and the CSV mirrors of the
+# structured parquet. Both are rebuilt by the per-dataset pipelines; the
+# parquet, metrics and reports are tracked.
+**/models/*.joblib
+**/structured/minute_features.csv
+**/structured/epoch_features.csv

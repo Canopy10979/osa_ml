@@ -1,0 +1,35 @@
+source export: 1069 epochs from 22:47:44.000 (8.91 h)
+UCDDB011 scored respiratory events: 35
+
+-- validation --
+  [PASS] event epochs present: 56
+  [PASS] derived event index near recorded AHI 8: 7.8 events/h vs AHI 8
+  [PASS] events concentrated in sleep: 6.3% vs 1.0%
+  [PASS] new target differs from legacy target: agreement 24.3%
+
+  epochs 1069 | event rate 5.2% | legacy 'OSA' target rate 80.5%
+
+-- models (5 contiguous time blocks; a random split would leak neighbours) --
+  LogisticRegression_L2    recall=0.411 PR-AUC=0.0849 ROC-AUC=0.6016
+  LogisticRegression_L1    recall=0.411 PR-AUC=0.0805 ROC-AUC=0.5987
+  RandomForest             recall=0.000 PR-AUC=0.0458 ROC-AUC=0.4492
+  XGBoost                  recall=0.000 PR-AUC=0.0591 ROC-AUC=0.5445
+
+  best: LogisticRegression_L2 (baseline PR-AUC=0.0524)
+
+-- same features, old target vs corrected target --
+  sleep_vs_wake (LEGACY target)    base=0.805 acc=0.755 bal_acc=0.551 ROC-AUC=0.7713
+  respiratory_event (CORRECT)      base=0.052 acc=0.717 bal_acc=0.572 ROC-AUC=0.6016
+
+top features on the corrected target:
+          feature  rf_impurity  univariate_auc
+flow_rel_amp_ctx2       0.1133          0.7307
+flow_rel_amp_ctx1       0.0849          0.7120
+     hr_mean_ctx2       0.0613          0.5977
+      hr_std_ctx2       0.0610          0.5757
+     hr_mean_ctx1       0.0557          0.5910
+      hr_std_ctx1       0.0555          0.5680
+     flow_rel_amp       0.0542          0.6596
+          hr_mean       0.0430          0.6162
+
+  SpO2 share of total importance: 23.3%  (legacy analysis gave SpO2 importance 0.0019)

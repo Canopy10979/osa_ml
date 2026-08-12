@@ -1,0 +1,57 @@
+==============================================================================
+STAGE 3-4 — MODELS (dataset_ucddb_v2)
+==============================================================================
+20,789 epochs | 25 subjects | 67 features
+class balance: 21.223% event  (majority baseline accuracy 0.7878)
+CV: StratifiedGroupKFold(5) grouped by subject — every subject held out exactly once.
+
+-- out-of-fold (grouped by subject) --
+  LogisticRegression_L2    recall=0.803  PR-AUC=0.7149  ROC-AUC=0.8975  (1s)
+  LogisticRegression_L1    recall=0.803  PR-AUC=0.7153  ROC-AUC=0.8979  (35s)
+  RandomForest             recall=0.575  PR-AUC=0.7716  ROC-AUC=0.9179  (24s)
+  XGBoost                  recall=0.762  PR-AUC=0.7893  ROC-AUC=0.9278  (8s)
+
+  best by PR-AUC: XGBoost   (baseline PR-AUC=0.2122, acc=0.7878)
+
+-- feature importance --
+        feature  lr_coef  lr_odds_ratio  rf_impurity  rf_permutation  xgb_gain
+       spo2_std  -1.1816         0.3068       0.0775          0.0040    0.1298
+     spo2_range   0.8793         2.4091       0.0792          0.0038    0.1072
+spo2_desat_ctx1   0.1459         1.1571       0.0837          0.0058    0.1059
+         asleep   1.0862         2.9629       0.0229          0.0130    0.0538
+spo2_desat_ctx2   0.0500         1.0513       0.0701          0.0040    0.0452
+        sum_iqr  -2.0868         0.1241       0.0316          0.0104    0.0276
+       spo2_iqr   0.5324         1.7031       0.0462          0.0025    0.0259
+  spo2_min_ctx1  -0.6671         0.5132       0.0285          0.0012    0.0185
+       spo2_min   0.7875         2.1978       0.0222          0.0009    0.0147
+      spo2_mean  -0.7702         0.4629       0.0112          0.0004    0.0146
+
+==============================================================================
+STAGE 5 — SUBJECT-LEVEL OSA (AHI >= 15)
+==============================================================================
+predicted event index vs recorded AHI: Pearson r=0.951 (p=3.6e-13)  MAE=13.00
+as a ranking score for OSA (AHI>=15): ROC-AUC=0.9156
+at best threshold 31: balanced_acc=0.893 sens=0.786 spec=1.000
+  (threshold fitted on these same 25 subjects — optimistic; the threshold-free ROC-AUC 0.916 is the honest figure)
+confusion:
+[[11  0]
+ [ 3 11]]
+
+leave-one-subject-out (threshold refit each fold): balanced_acc=0.847 acc=0.840
+
+==============================================================================
+STAGE 6 — VALIDATING THE ANALYSIS
+==============================================================================
+
+6a. LABEL-SHUFFLE TEST
+  global shuffle           PR-AUC=0.2122 (chance=0.2122)  ROC-AUC=0.5007
+  within-subject shuffle   PR-AUC=0.2381 (chance=0.2122)  ROC-AUC=0.5311
+  real labels              ROC-AUC=0.9278
+  VERDICT (global shuffle): PASS — no leakage.
+  DIAGNOSTIC (within-subject shuffle) ROC-AUC=0.5311 -> ~7% of skill is between-subject
+
+6b. SEED VARIANCE
+  seed=   42 PR-AUC=0.7884 ROC-AUC=0.9268
+  seed=    7 PR-AUC=0.7938 ROC-AUC=0.9274
+  seed= 2024 PR-AUC=0.7884 ROC-AUC=0.9270
+  PR-AUC mean=0.7902 sd=0.0031

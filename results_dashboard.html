@@ -334,11 +334,21 @@ footer.page { color: var(--cp-text-soft); font-size: 12.5px; margin-top: 34px; t
 
 <header class="page">
   <h1>Can a machine detect sleep apnea?</h1>
-  <p>Four datasets were run through the same pipeline. Only one produced a real, defensible answer. This dashboard shows what each dataset could and could not support, and which physiological signals actually drove the predictions.</p>
+  <p>Five datasets were run through the same pipeline. Three produced real answers, and the newest one is the first that pinpoints individual apneas rather than just recognizing which patients are sick. This dashboard shows what each dataset could and could not support, and which physiological signals actually drove the predictions.</p>
 </header>
 
 <!-- SUMMARY STRIP -->
 <div class="summary">
+  <a class="sum-card ok" href="#d5" style="text-decoration:none;color:inherit;display:block">
+    <div class="name">dataset_ucddb_v2</div>
+    <div class="verd">✅ Detects events</div>
+    <div class="why">Full PSG with SpO2 — only ~7% of skill is subject identity</div>
+  </a>
+  <a class="sum-card ok" href="#d0" style="text-decoration:none;color:inherit;display:block">
+    <div class="name">dataset_apnea_hrv</div>
+    <div class="verd">✅ Strongest result</div>
+    <div class="why">40 controls vs 37 patients — separates them at AUC 0.937</div>
+  </a>
   <a class="sum-card ok" href="#d1" style="text-decoration:none;color:inherit;display:block">
     <div class="name">dataset_apnea_ecg</div>
     <div class="verd">✅ Real result</div>
@@ -349,24 +359,230 @@ footer.page { color: var(--cp-text-soft); font-size: 12.5px; margin-top: 34px; t
     <div class="verd">❌ No OSA present</div>
     <div class="why">Max AHI is 4.9 — nobody in the cohort has OSA</div>
   </a>
-  <a class="sum-card bad" href="#d3" style="text-decoration:none;color:inherit;display:block">
-    <div class="name">dataset_ucddb</div>
-    <div class="verd">❌ Data missing</div>
-    <div class="why">Right patients, but recordings were never downloaded</div>
-  </a>
   <a class="sum-card warn" href="#d4" style="text-decoration:none;color:inherit;display:block">
     <div class="name">cross_dataset</div>
-    <div class="verd">⚠️ Mislabeled</div>
-    <div class="why">97% "OSA" accuracy is actually asleep-vs-awake</div>
+    <div class="verd">⚠️ Fixed — now negative</div>
+    <div class="why">97% was sleep-vs-wake; corrected labels give AUC 0.60</div>
   </a>
 </div>
 
 
-<!-- ============ DATASET 1 ============ -->
+<!-- ============ DATASET: ucddb_v2 ============ -->
+<section class="card" id="d5">
+  <div class="card-head">
+    <h2>1 · dataset_ucddb_v2</h2>
+    <span class="badge ok">✅ Detects events, not people</span>
+  </div>
+  <p class="subtitle">25 full overnight sleep studies from a Dublin hospital — the only dataset here with the sensors clinicians <em>actually</em> use: a blood-oxygen probe, a nasal airflow sensor, and chest/belly effort belts. Everything else in this project had to infer apnea indirectly from heartbeat.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">25</div><div class="l">Subjects (14 / 11)</div></div>
+    <div class="stat"><div class="v">20,789</div><div class="l">30-second epochs</div></div>
+    <div class="stat"><div class="v">0.928</div><div class="l">Event-detection AUC</div></div>
+    <div class="stat"><div class="v">~7%</div><div class="l">Skill from identity</div></div>
+  </div>
+
+  <div class="block">
+    <h3>How well does it spot an apnea? (0.5 = coin flip)</h3>
+    <div class="score-row">
+      <div class="lbl">XGBoost <small>per 30-second epoch</small></div>
+      <div class="track"><div class="fill success" style="width:92.8%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.928</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Blood oxygen alone <small>one single feature</small></div>
+      <div class="track"><div class="fill accent" style="width:84.9%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.849</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Shuffled labels <small>cheating check</small></div>
+      <div class="track"><div class="fill muted" style="width:50.1%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.501</div>
+    </div>
+    <div class="note good">
+      <strong>The strongest per-observation result in the project</strong>
+      A 3.7× improvement over doing nothing, stable to within 0.003 across random seeds, with the cheating check collapsing cleanly to chance.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>This one really is detecting apneas — not just recognizing patients</h3>
+    <div class="score-row">
+      <div class="lbl">ucddb_v2 <small>full PSG with oxygen</small></div>
+      <div class="track"><div class="fill success" style="width:93%"></div></div>
+      <div class="num">~93%</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">apnea_ecg <small>heartbeat only</small></div>
+      <div class="track"><div class="fill warn" style="width:60%"></div></div>
+      <div class="num">~60%</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">apnea_hrv <small>heartbeat only</small></div>
+      <div class="track"><div class="fill warn" style="width:41%"></div></div>
+      <div class="num">~41%</div>
+    </div>
+    <div class="note good">
+      <strong>Share of skill that is genuine event detection</strong>
+      The two heartbeat datasets get 40–59% of their apparent skill from learning <em>who the patient is</em> and riding their overall severity. Here that figure is only <strong>7%</strong>. The reason is sensor access: blood oxygen drops <em>during</em> an apnea, while heart-rate effects are a diffuse downstream echo that partly encodes the person.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>What the model reads</h3>
+    <div class="corr-row">
+      <div class="lbl"><code>spo2_range</code> <small>oxygen swing within the epoch</small></div>
+      <div class="corr-track"><div class="corr-zero"></div><div class="corr-bar pos" style="left:50%;width:10.8%"></div></div>
+      <div class="num">+0.22</div>
+    </div>
+    <div class="corr-row">
+      <div class="lbl"><code>spo2_desat</code> <small>drop below recent baseline</small></div>
+      <div class="corr-track"><div class="corr-zero"></div><div class="corr-bar pos" style="left:50%;width:9.9%"></div></div>
+      <div class="num">+0.20</div>
+    </div>
+    <div class="corr-axis"><div></div><div class="ends"><span>−1.0</span><span>0</span><span>+1.0 (predicts apnea)</span></div><div></div></div>
+    <div class="note good">
+      <strong>The top nine features are all blood-oxygen measures</strong>
+      When you stop breathing, your blood oxygen falls and then recovers with the gasp. That dip is the direct physical consequence of an apnea, and it is what this model reads. Worth contrasting with the legacy <code>cross_dataset</code> analysis below, which gave blood oxygen an importance of 0.0019 and still called itself an OSA model.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Can it tell who has OSA?</h3>
+    <div class="score-row">
+      <div class="lbl">Ranking patients by severity <small>predicted vs true AHI</small></div>
+      <div class="track"><div class="fill success" style="width:91.6%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.916</div>
+    </div>
+    <div class="note warn">
+      <strong>Yes, with a caveat about size</strong>
+      Predicted severity tracks the clinical score at r = 0.951, and a leave-one-patient-out test — where each patient's own data never sets their threshold — gets 84.7% balanced accuracy. But this is <strong>25 people</strong>. The perfect specificity (11/11 healthy correctly cleared) has a wide margin of error and should not be read as "never wrong."
+    </div>
+    <div class="note good">
+      <strong>It fills the gap the other datasets left</strong>
+      <strong>16 of these 25 patients sit in the AHI 5–25 range</strong> — the mild-to-moderate band that is hardest to diagnose, and which <code>apnea_hrv</code> excludes entirely by design. This is the cohort that tests the cases that actually matter.
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top:14px;font-size:13px">Source: <code>common/ucddb_features.py</code> → <code>ucddb_models.py</code>; figures from the run of 11 Aug 2026, traced to <code>dataset_ucddb_v2/results/</code>. Event-to-epoch time alignment validated at r = 0.978 against the recorded PSG AHI.</p>
+</section>
+
+
+<!-- ============ DATASET: apnea_hrv ============ -->
+<section class="card" id="d0">
+  <div class="card-head">
+    <h2>2 · dataset_apnea_hrv</h2>
+    <span class="badge ok">✅ The strongest result</span>
+  </div>
+  <p class="subtitle">77 people from a Spanish hospital sleep unit — <strong>40 healthy controls and 37 apnea patients</strong>. Every minute scored by an expert against full polysomnography. This is the only dataset here with enough healthy people to answer the question everyone actually cares about: <em>can you tell a patient from a healthy person?</em></p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">77</div><div class="l">Subjects (40 / 37)</div></div>
+    <div class="stat"><div class="v">30,445</div><div class="l">Labeled minutes</div></div>
+    <div class="stat"><div class="v">0.937</div><div class="l">Patient-vs-control AUC</div></div>
+    <div class="stat"><div class="v">0.006</div><div class="l">Seed variance</div></div>
+  </div>
+
+  <div class="block">
+    <h3>Telling patients from healthy people (0.5 = coin flip)</h3>
+    <div class="score-row">
+      <div class="lbl">Patient vs. control <small>pooled per person</small></div>
+      <div class="track"><div class="fill success" style="width:93.7%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.937</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">On unseen test subjects <small>never trained on</small></div>
+      <div class="track"><div class="fill success" style="width:92.1%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.921</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Per-minute detection <small>XGBoost, single minutes</small></div>
+      <div class="track"><div class="fill accent" style="width:86.5%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.865</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Shuffled labels <small>cheating check</small></div>
+      <div class="track"><div class="fill muted" style="width:49.5%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.495</div>
+    </div>
+    <div class="note good">
+      <strong>Sensitivity 89%, specificity 90%</strong>
+      Of 40 healthy people it correctly cleared 36; of 37 patients it caught 33. Compare <code>dataset_apnea_ecg</code> below, which identified just 1 of its 4 non-patients — that dataset had only 2 healthy controls to learn from. The difference here is <em>cohort design</em>, not a better algorithm.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>The headline correlation — a different signal than the ECG dataset found</h3>
+    <div class="corr-row">
+      <div class="lbl"><code>r_cvhr</code> <small>slow 25–100s heart-rate cycling</small></div>
+      <div class="corr-track"><div class="corr-zero"></div><div class="corr-bar pos" style="left:50%;width:23.7%"></div></div>
+      <div class="num">+0.47</div>
+    </div>
+    <div class="corr-row">
+      <div class="lbl"><code>r_hf</code> <small>breathing-linked heart rate swing</small></div>
+      <div class="corr-track"><div class="corr-zero"></div><div class="corr-bar neg" style="right:50%;width:16%"></div></div>
+      <div class="num">−0.32</div>
+    </div>
+    <div class="corr-axis"><div></div><div class="ends"><span>−1.0 (predicts apnea)</span><span>0</span><span>+1.0 (predicts apnea)</span></div><div></div></div>
+    <div class="note good">
+      <strong>What this means in plain terms</strong>
+      Every apnea ends in a gasp and a brief arousal, which spikes the heart rate. Repeated all night, that produces a slow rhythmic surge-and-settle pattern roughly every 25–100 seconds. Here <em>that</em> cycling is the top signal (0.806 on its own) — the four strongest features are all versions of it. The breathing-linked measure that dominated the ECG dataset is present too, but second.
+    </div>
+    <div class="note warn">
+      <strong>Why the ECG dataset “disagreed” — it didn’t</strong>
+      The <code>apnea_ecg</code> report recorded, as a finding, that this cycling signal <em>didn’t</em> matter. That was a bug. Its CVHR features are <strong>identically zero for all 13,286 minutes</strong>: the code discards a frequency band unless more than two FFT bins land inside it, and at that pipeline’s resolution exactly two did. The signal was never measured, not measured-and-absent.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Does it transfer to a completely different hospital? (the strongest evidence)</h3>
+    <div class="score-row">
+      <div class="lbl">Trained here → tested on ECG data <small>different country, decade, hardware</small></div>
+      <div class="track"><div class="fill success" style="width:79.5%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.795</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">A model trained <em>on</em> that data <small>the fair comparison</small></div>
+      <div class="track"><div class="fill muted" style="width:79.6%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.796</div>
+    </div>
+    <div class="note good">
+      <strong>Essentially zero transfer loss</strong>
+      A model that has never seen a single PhysioNet recording detects apnea minutes in it <em>as well as</em> a model trained on that data directly — a gap of 0.001. Different hardware, different country, and an apnea rate of 22% vs 49%. This is the best evidence in the whole project that the signal is real physiology rather than something memorised from one dataset.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>The honest catch — same caveat as the ECG dataset, larger</h3>
+    <div class="score-row">
+      <div class="lbl">Real event detection <small>spotting individual apneas</small></div>
+      <div class="track"><div class="fill accent" style="width:41%"></div></div>
+      <div class="num">~41%</div>
+    </div>
+    <div class="score-row">
+      <div class="lbl">Subject recognition <small>“this person is a severe apneic”</small></div>
+      <div class="track"><div class="fill warn" style="width:59%"></div></div>
+      <div class="num">~59%</div>
+    </div>
+    <div class="note warn">
+      <strong>Excellent screener, weaker event detector</strong>
+      About 59% of the model’s skill above chance comes from recognizing <em>who the person is</em> rather than which specific minute is an apnea. For screening — the actual clinical use — that is fine, and it is exactly why the patient-vs-control number is so strong. It does mean the per-minute figure overstates true event detection.
+    </div>
+    <div class="note warn">
+      <strong>The missing middle</strong>
+      This cohort is deliberately gapped: controls are all below AHI 5, patients all above AHI 25, and <em>nobody sits in between</em>. That 5–25 band is precisely the mild-to-moderate range that is hardest to diagnose and most common in practice. Nothing here says how the model performs on those patients.
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top:14px;font-size:13px">Source: <code>common/apnea_hrv_features.py</code> → <code>apnea_hrv_models.py</code> → <code>apnea_hrv_validate.py</code>; figures from the run of 11 Aug 2026, traced to <code>dataset_apnea_hrv/results/</code>.</p>
+</section>
+
+
+<!-- ============ DATASET 2 ============ -->
 <section class="card" id="d1">
   <div class="card-head">
-    <h2>1 · dataset_apnea_ecg</h2>
-    <span class="badge ok">✅ The real result</span>
+    <h2>3 · dataset_apnea_ecg</h2>
+    <span class="badge ok">✅ Real, but small</span>
   </div>
   <p class="subtitle">27 people, one night each. An expert scored every single minute as “apnea” or “normal.” The question: can a computer tell which minutes were apneas from heartbeat alone?</p>
 
@@ -453,7 +669,7 @@ footer.page { color: var(--cp-text-soft); font-size: 12.5px; margin-top: 34px; t
 <!-- ============ DATASET 2 ============ -->
 <section class="card" id="d2">
   <div class="card-head">
-    <h2>2 · dataset_bioradiolocation</h2>
+    <h2>4 · dataset_bioradiolocation</h2>
     <span class="badge bad">❌ The question is undefined</span>
   </div>
   <p class="subtitle">32 people, 1.6 GB of radar sleep recordings. Every subject’s AHI (the standard OSA severity score) was checked.</p>
@@ -487,138 +703,87 @@ footer.page { color: var(--cp-text-soft); font-size: 12.5px; margin-top: 34px; t
 </section>
 
 
-<!-- ============ DATASET 3 ============ -->
-<section class="card" id="d3">
-  <div class="card-head">
-    <h2>3 · dataset_ucddb</h2>
-    <span class="badge bad">❌ Right patients, missing data</span>
-  </div>
-  <p class="subtitle">25 people with genuinely severe OSA — exactly the population you would want. But the actual sleep recordings were never fetched.</p>
-
-  <div class="stats">
-    <div class="stat"><div class="v">25</div><div class="l">Subjects</div></div>
-    <div class="stat"><div class="v">16</div><div class="l">Median AHI</div></div>
-    <div class="stat"><div class="v">91</div><div class="l">Max AHI</div></div>
-    <div class="stat"><div class="v">12 KB</div><div class="l">Data downloaded</div></div>
-  </div>
-
-  <div class="block">
-    <h3>Severity profile — this is the population you want</h3>
-    <div class="ahi-scale">
-      <div class="ahi-bar"></div>
-      <div class="ahi-tick" style="left:0%">0<i></i></div>
-      <div class="ahi-tick" style="left:5.5%">5<i></i></div>
-      <div class="ahi-tick" style="left:16.5%">15<i></i></div>
-      <div class="ahi-tick" style="left:33%">30<i></i></div>
-      <div class="ahi-tick" style="left:100%">91<i></i></div>
-      <div class="ahi-marker" style="left:17.6%" title="Median AHI = 16"></div>
-      <div class="ahi-marker" style="left:100%" title="Max AHI = 91"></div>
-    </div>
-    <div class="note bad">
-      <strong>Nothing to analyze</strong>
-      Only the spreadsheet was downloaded. <code>raw/</code> contains a single 12 KB file of heights, weights and ages — the polysomnography recordings themselves were never fetched.
-    </div>
-  </div>
-
-  <div class="block">
-    <h3>Class balance depends entirely on the threshold you pick</h3>
-    <div style="font-size:12.5px;color:var(--cp-text-muted);margin-bottom:6px">Standard threshold — AHI ≥ 5</div>
-    <div class="cohort">
-      <div class="seg-osa"  style="flex:24">24 with OSA</div>
-      <div class="seg-none" style="flex:1"></div>
-    </div>
-    <div style="font-size:12.5px;color:var(--cp-text-muted);margin:16px 0 6px">Moderate threshold — AHI ≥ 15</div>
-    <div class="cohort">
-      <div class="seg-osa"  style="flex:14">14 moderate+</div>
-      <div class="seg-none" style="flex:11">11 mild/none</div>
-    </div>
-    <div class="note warn">
-      <strong>Only fair at the moderate cutoff</strong>
-      At the standard threshold you would be comparing 24 people against 1 — statistically meaningless. It only becomes a fair fight at AHI ≥ 15, which splits the cohort 14 vs 11.
-    </div>
-  </div>
-</section>
-
 
 <!-- ============ DATASET 4 ============ -->
 <section class="card" id="d4">
   <div class="card-head">
-    <h2>4 · cross_dataset</h2>
-    <span class="badge warn">⚠️ Mislabeled — this is not OSA</span>
+    <h2>5 · cross_dataset</h2>
+    <span class="badge warn">⚠️ Was mislabeled — now fixed</span>
   </div>
-  <p class="subtitle">The most impressive-looking numbers in the whole project: 97% accuracy, Random Forest with recall 1.0, and a file literally named <code>model_accuracy_by_osa_status.csv</code>. None of it is about OSA.</p>
+  <p class="subtitle">This folder once reported <strong>97% accuracy at detecting OSA</strong>. It was not detecting OSA. The mislabeling has now been traced, corrected, and the analysis re-run with the real apnea labels — and the honest answer is that this data cannot support an OSA claim.</p>
 
   <div class="stats">
-    <div class="stat"><div class="v">1</div><div class="l">Person</div></div>
-    <div class="stat"><div class="v">925</div><div class="l">Windows, one night</div></div>
-    <div class="stat"><div class="v">97%</div><div class="l">Claimed accuracy</div></div>
-    <div class="stat"><div class="v">0.698</div><div class="l">Balanced accuracy</div></div>
-  </div>
-
-  <div class="note bad">
-    <strong>What it is actually predicting</strong>
-    The target column is <code>Sleep_Label</code>, and the generating code says so outright — <code>regenerate_pipeline.py:121</code> labels the axis “Sleep_Label (0 = awake, 1 = asleep).” The source file is a sleep-<em>stage</em> scoring sheet (W, N1, N2, N3, R). It is an <strong>asleep-vs-awake classifier that was relabeled as an OSA detector</strong>.
+    <div class="stat"><div class="v">1</div><div class="l">Patient (UCDDB011)</div></div>
+    <div class="stat"><div class="v">1,069</div><div class="l">Epochs (56 events)</div></div>
+    <div class="stat"><div class="v">0.602</div><div class="l">Corrected AUC</div></div>
+    <div class="stat"><div class="v">24%</div><div class="l">Old vs new target agree</div></div>
   </div>
 
   <div class="block">
-    <h3>Problem 1 — the 97% is an illusion</h3>
+    <h3>What was wrong</h3>
+    <div class="note danger">
+      <strong>It was predicting “asleep vs awake,” labeled as “has OSA vs doesn’t”</strong>
+      The target column was <code>Sleep_Label</code>, and the code that produced it says so outright: <em>“0=awake, 1=asleep.”</em> Because 80% of a night is spent asleep, always guessing “asleep” already scores about 80% — which is where the impressive-looking 97% came from. The giveaway was that blood oxygen, the defining sign of apnea, was given an importance of <strong>0.0019</strong>.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>The fix — we found out whose night this is</h3>
+    <div class="note good">
+      <strong>It is UCDDB011, and the real apnea labels exist</strong>
+      The recording was unattributed. Its start time (22:47:44) and 8.9-hour length match patient <strong>UCDDB011</strong> in <code>dataset_ucddb_v2</code> — start 22:47:38, recorded AHI 8. So the expert's actual apnea list for that night could be attached in place of the sleep labels. Alignment checks out: the re-derived rate is <strong>7.8 events/hour against a recorded AHI of 8</strong>.
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Old target vs corrected target — barely the same problem</h3>
     <div class="score-row">
-      <div class="lbl">Reported accuracy</div>
-      <div class="track"><div class="fill warn" style="width:97%"></div></div>
-      <div class="num">0.97</div>
+      <div class="lbl">“Asleep vs awake” <small>the old, wrong target</small></div>
+      <div class="track"><div class="fill muted" style="width:80.5%"></div></div>
+      <div class="num">80.5%</div>
     </div>
     <div class="score-row">
-      <div class="lbl">Guess “asleep” every time <small>majority class</small></div>
-      <div class="track"><div class="fill muted" style="width:94%"></div></div>
-      <div class="num">0.94</div>
-    </div>
-    <div class="score-row">
-      <div class="lbl">Balanced accuracy <small>the fair measure</small></div>
-      <div class="track"><div class="fill danger" style="width:69.8%"></div></div>
-      <div class="num">0.698</div>
+      <div class="lbl">Actual apnea epochs <small>the correct target</small></div>
+      <div class="track"><div class="fill accent" style="width:5.2%"></div></div>
+      <div class="num">5.2%</div>
     </div>
     <div class="note warn">
-      <strong>Barely better than doing nothing</strong>
-      94% of the windows are “asleep,” so a model that always answers “asleep” already scores 94%. The honest number, reported in the same folder, is <strong>0.698</strong>.
+      <strong>The two targets agree on only 24% of epochs</strong>
+      They are not variations on a question — they are different questions. One is “is this person asleep,” the other is “is this person having an apnea right now.”
     </div>
   </div>
 
   <div class="block">
-    <h3>Problem 2 — the correlations prove it isn’t OSA</h3>
-    <div class="imp-grid">
-      <div class="imp-cell">
-        <div class="feat">Heart rate</div>
-        <div class="desc">Drops naturally when you fall asleep — 72 bpm awake → 61 bpm asleep</div>
-        <div class="mini"><span class="mlbl">Correlation</span><span class="mtrack"><span class="mfill" style="width:41%;background:var(--cp-accent)"></span></span><span class="mnum">−0.41</span></div>
-        <div class="mini"><span class="mlbl">Importance</span><span class="mtrack"><span class="mfill" style="width:44.5%;background:var(--cp-accent)"></span></span><span class="mnum">0.445</span></div>
-      </div>
-      <div class="imp-cell">
-        <div class="feat">SpO₂ (blood oxygen)</div>
-        <div class="desc">The defining sign of apnea — and the model ignores it entirely</div>
-        <div class="mini"><span class="mlbl">Correlation</span><span class="mtrack"><span class="mfill" style="width:6.6%;background:var(--cp-border-strong)"></span></span><span class="mnum">0.066</span></div>
-        <div class="mini"><span class="mlbl">Importance</span><span class="mtrack"><span class="mfill" style="width:0.5%;background:var(--cp-border-strong)"></span></span><span class="mnum">0.002</span></div>
-      </div>
+    <h3>The corrected result (0.5 = coin flip)</h3>
+    <div class="score-row">
+      <div class="lbl">Best model, real labels <small>logistic regression</small></div>
+      <div class="track"><div class="fill warn" style="width:60.2%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">0.602</div>
     </div>
-    <div class="note bad">
-      <strong>The smoking gun</strong>
-      A real OSA model would lean heavily on oxygen desaturation. This one gives SpO₂ an importance of <strong>0.0019 — essentially zero</strong> — while heart rate does nearly all the work. That is exactly the signature of a sleep detector, not an apnea detector.
-    </div>
-  </div>
-
-  <div class="block">
-    <h3>Problem 3 — one person, one night</h3>
-    <div class="cohort">
-      <div class="seg-osa" style="flex:1">1 subject · 1 recording · 925 windows</div>
+    <div class="score-row">
+      <div class="lbl">Random Forest / XGBoost <small>predict zero events</small></div>
+      <div class="track"><div class="fill muted" style="width:50%"></div><div class="chance-mark" style="left:50%"></div></div>
+      <div class="num">~0.50</div>
     </div>
     <div class="note warn">
-      <strong>Zero ability to generalize</strong>
-      Everything the model learned came from a single recording of a single individual. It cannot be expected to transfer to anyone else.
+      <strong>A negative result, reported as one</strong>
+      With the correct labels the best model barely clears chance, and both tree models refuse to predict a single apnea. The 97% headline does not survive correction. Feature importance does at least move the right way — airflow reduction becomes the top signal and blood oxygen rises from 0.0019 to <strong>23%</strong> of total importance — so the signal is faintly present. There is just not enough of it here.
     </div>
   </div>
+
+  <div class="block">
+    <h3>Why it fails — and why that is reassuring</h3>
+    <div class="note good">
+      <strong>The same patient is detected at 0.928 in the full dataset</strong>
+      This is not a contradiction of <code>dataset_ucddb_v2</code> — it shows what is lost when one night is stripped down. Here: <strong>one</strong> patient with mild disease (AHI 8), only <strong>56</strong> apnea epochs to learn from, and just three low-rate channels (1 Hz heart rate and oxygen, 2 Hz airflow) with <strong>no chest or belly effort belts</strong>. The full study keeps 8 Hz oxygen and airflow plus effort, across 25 patients.
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top:14px;font-size:13px">Source: <code>common/cross_dataset_relabel.py</code>; figures from the run of 11 Aug 2026, traced to <code>cross_dataset/results/relabelled_*.csv</code>. Legacy outputs retained for provenance only.</p>
 </section>
 
 <footer class="page">
-  Bottom line: <strong>dataset_apnea_ecg</strong> is the only dataset that supports an OSA claim — and even there the headline is inflated by subject identity and it cannot rule OSA out. The other three are undefined, empty, or measuring the wrong thing.
+  Bottom line: <strong>dataset_ucddb_v2</strong> gives the cleanest result — with full sleep-lab sensors it pinpoints individual apneas (AUC 0.928) rather than just recognizing which patients are sick, and only ~7% of its skill comes from patient identity. <strong>dataset_apnea_hrv</strong> is the best <em>screener</em>: from heartbeat alone it separates 37 patients from 40 healthy controls at AUC 0.937, and its findings transfer to a completely different hospital with almost no loss. <strong>dataset_apnea_ecg</strong> confirms the heartbeat signal but has only 2 healthy controls, so it cannot rule OSA out. The remaining two datasets are undefined or measuring the wrong thing. Nothing here is a validated clinical tool: the largest cohort is 77 people, and the heartbeat models lean heavily on recognizing the person.
 </footer>
 
 </div>

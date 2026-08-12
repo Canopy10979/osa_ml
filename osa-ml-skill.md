@@ -97,6 +97,16 @@ analyzed to date — newly added ones and any that already existed. Never delete
 a previously analyzed dataset's section just because this run did not touch it; the dashboard
 is cumulative.
 
+Cumulative does **not** mean append-only. Before publishing, re-read the artifacts behind
+*every* section, not just the dataset this run touched, and correct any figure that no
+longer matches. Re-running a pipeline, fixing a feature bug, or adding subjects silently
+invalidates numbers already on the page, and a stale dashboard is worse than a missing one
+because it looks current. If a re-run changed a conclusion — a verdict flipping from ✅ to
+⚠️, a metric moving materially — say so on the page rather than quietly swapping the number.
+
+Give each section a provenance line: which script produced it, and the date of the run the
+figures come from. That is what makes staleness detectable on the next pass.
+
 - **Build it with the `web-artifacts-builder` skill.** Single self-contained HTML file, no
   external dependencies, Clawpilot theme variables and theme-detection script included.
 - **Verdict strip at the top:** one clickable card per dataset with a plain-language status

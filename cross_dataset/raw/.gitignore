@@ -1,0 +1,5 @@
+# Raw source data is NOT tracked -- it is large, immutable, and re-derivable.
+# Everything in this directory is ignored except this file and the provenance note.
+*
+!.gitignore
+!README.md

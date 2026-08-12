@@ -6,7 +6,6 @@ Layout follows the `Output structure` section of [osa-ml-skill.md](osa-ml-skill.
 OSA ML/
 ├── common/                      # shared pipeline code (was scripts/)
 ├── dataset_apnea_ecg/           # PhysioNet Apnea-ECG  — has real OSA labels
-├── dataset_ucddb/               # UCD Sleep Apnea DB   — demographics only
 ├── dataset_bioradiolocation/    # Sleep Bioradiolocation — ZERO OSA cases
 │   └── {raw,structured,models,results}/ + report.md
 ├── cross_dataset/               # prior run variants + comparative outputs
@@ -33,7 +32,6 @@ before this rule existed, so those files remain in the index and in history —
 | Dataset | OSA label? |
 |---|---|
 | apnea_ecg | **Yes** — record prefix `a*`=apnea, `b*`=borderline, `c*`=control |
-| ucddb | Demographics only |
 | bioradiolocation | **No** — all 32 subjects have AHI ≤ 4.9, below the AHI ≥ 5 threshold |
 
 ---
