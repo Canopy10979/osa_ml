@@ -1,3 +1,12 @@
+# Temporary patient aggregation report exports
+aggregation_code.txt
+aggregation_model_code.txt
+severity_logic.txt
+subject_level_results.txt
+window_predictions_sample.txt
+
+# Superseded Word conversion helper
+convert_findings_to_word.py
 venv/
 __pycache__/
 *.py[cod]
