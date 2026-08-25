@@ -1,0 +1,12 @@
+Experiment,Evaluation,Threshold,ROC_AUC,Sensitivity_Recall,Specificity,FPR,F1,Balanced_Accuracy,Accuracy,Precision,TN,FP,FN,TP
+Baseline Logistic Regression,Threshold 0.50,0.5,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Baseline Logistic Regression,Youden Optimal Threshold,0.9930475251327229,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Weighted Logistic Regression,Threshold 0.50,0.5,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Weighted Logistic Regression,Youden Optimal Threshold,0.9944671828664915,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Baseline Random Forest,Threshold 0.50,0.5,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Baseline Random Forest,Youden Optimal Threshold,0.615,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Weighted Random Forest,Threshold 0.50,0.5,0.9999999999999999,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Weighted Random Forest,Youden Optimal Threshold,0.59,0.9999999999999999,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Gradient Boosting,Threshold 0.50,0.5,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+Gradient Boosting,Youden Optimal Threshold,0.9999758806948313,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961
+GMM Generative Augmentation,Youden Optimal Threshold,0.9959486317148353,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1143,0,0,1961

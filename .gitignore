@@ -30,3 +30,5 @@ __pycache__/
 
 # Throwaway dataset-fetching scratch (hardcoded URLs, print debugging).
 tmp_*.py
+
+sensitivity_specificity.py
