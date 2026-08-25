@@ -87,6 +87,107 @@ def detect_subject(df):
 
 
 def numeric_feature_columns(df, target, subject):
+    """
+    Return only safe numeric predictor columns.
+
+    Explicitly removes:
+    - target/subject identifiers
+    - label-derived columns
+    - constant features
+    - features nearly perfectly correlated with the target
+    """
+
+    leakage_names = {
+        "label",
+        "target",
+        "class",
+        "apnea",
+        "apnea_label",
+        "osa_label",
+        "annotation",
+        "event_label",
+        "true_label",
+        "ground_truth",
+        "severity",
+        "ahi",
+        "prediction",
+        "predicted",
+    }
+
+    features = []
+
+    # Convert target so correlation checks work
+    target_values = (
+        df[target]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .map({
+            "N": 0,
+            "A": 1,
+            "0": 0,
+            "1": 1,
+            "0.0": 0,
+            "1.0": 1,
+        })
+    )
+
+    print("\n🔬 Screening Action #3 features...")
+
+    for col in df.columns:
+
+        if col in [target, subject]:
+            continue
+
+        name = str(col).lower().strip()
+
+        if name in leakage_names:
+            print(f"🚨 Removed leakage-risk column: {col}")
+            continue
+
+        converted = pd.to_numeric(
+            df[col],
+            errors="coerce"
+        )
+
+        # Require mostly numeric values
+        if converted.notna().mean() < 0.80:
+            continue
+
+        # Remove constant features
+        if converted.nunique(dropna=True) <= 1:
+            print(f"🗑️ Removed constant feature: {col}")
+            continue
+
+        # Remove near-perfect target correlation
+        valid = (
+            converted.notna()
+            &
+            target_values.notna()
+        )
+
+        if valid.sum() >= 10:
+
+            corr = np.corrcoef(
+                converted[valid],
+                target_values[valid]
+            )[0, 1]
+
+            if np.isfinite(corr) and abs(corr) >= 0.95:
+                print(
+                    f"🚨 Removed likely leakage feature: "
+                    f"{col} (corr={corr:.4f})"
+                )
+                continue
+
+        features.append(col)
+
+    print(
+        f"\n✅ Safe Action #3 features retained: "
+        f"{len(features)}"
+    )
+
+    return features
     excluded = {target, subject}
 
     features = []

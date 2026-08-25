@@ -1,0 +1,31 @@
+{
+  "random_state": 42,
+  "test_size": 0.2,
+  "features_used": 51,
+  "training_rows": 10182,
+  "testing_rows": 3104,
+  "training_subjects": 21,
+  "testing_subjects": 6,
+  "subject_overlap": 0,
+  "neural_network_architectures": {
+    "NN Shallow ReLU": [
+      64
+    ],
+    "NN Deep ReLU": [
+      128,
+      64,
+      32
+    ],
+    "NN Deep Tanh": [
+      128,
+      64,
+      32
+    ],
+    "NN Very Deep ReLU": [
+      256,
+      128,
+      64,
+      32
+    ]
+  }
+}
