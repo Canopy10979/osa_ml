@@ -1,0 +1,5 @@
+Model,TN,FP,FN,TP
+Logistic Regression L1,5194,1590,1898,4604
+Logistic Regression L2,5184,1600,1901,4601
+Random Forest,5668,1116,2268,4234
+XGBoost,5706,1078,2063,4439
