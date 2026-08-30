@@ -1,24 +1,61 @@
 # OSA ML
 
-Layout follows the `Output structure` section of [osa-ml-skill.md](osa-ml-skill.md).
+The repository is organized by dataset, with shared pipeline code and separate
+cross-dataset, validation, and mentor-review outputs.
 
 ```
 OSA ML/
-├── common/                      # shared pipeline code (was scripts/)
-├── dataset_apnea_ecg/           # PhysioNet Apnea-ECG  — has real OSA labels
-├── dataset_bioradiolocation/    # Sleep Bioradiolocation — ZERO OSA cases
-│   └── {raw,structured,models,results}/ + report.md
-├── cross_dataset/               # prior run variants + comparative outputs
-├── validation/                  # block cross-validation
-├── FINAL_REPORT.md
-└── README.md
+|-- common/                              # Shared features, models, and validation code
+|-- dataset_apnea_ecg/                   # PhysioNet Apnea-ECG pipeline
+|   |-- raw/
+|   |-- structured/
+|   |-- models/
+|   |-- results/
+|   `-- report.md
+|-- dataset_apnea_hrv/                   # Apnea-HRV pipeline
+|   |-- raw/
+|   |-- structured/
+|   |-- models/
+|   |-- results/
+|   `-- report.md
+|-- dataset_bioradiolocation/            # Sleep Bioradiolocation pipeline
+|   |-- raw/
+|   |-- structured/
+|   |-- models/
+|   |-- results/
+|   `-- report.md
+|-- dataset_ucddb_v2/                    # UCDDB feature and model pipeline
+|   |-- raw/
+|   |-- structured/
+|   |-- models/
+|   |-- results/
+|   `-- report.md
+|-- cross_dataset/                       # Harmonized data and transfer comparisons
+|   |-- raw/
+|   |-- structured/
+|   |-- models/
+|   |-- results/
+|   |-- figures/
+|   `-- comparison.md
+|-- validation/
+|   `-- block_cross_validation/          # Block CV summaries and fold results
+|-- mentor_action_items/                 # Review findings, tables, and figures
+|-- patient_level_aggregation_findings.md
+|-- generate_aggregation_report.py
+|-- aggregation_code.txt
+|-- aggregation_model_code.txt
+|-- FINAL_REPORT.md
+|-- results_dashboard.html
+|-- requirements.txt
+|-- requirements_full.txt
+|-- osa-ml-skill.md
+`-- README.md
 ```
 
-Datasets are split **by raw source**. The pre-existing `results/` and `models/`
-were pipeline *run variants* (`regenerated`, `batch_sampled`, `balanced_models`,
-`block_cross_validation`) rather than per-dataset outputs, so they live in
-`cross_dataset/` and `validation/`; the `dataset_*/results/` folders are empty
-until the pipeline is re-run scoped to one dataset.
+Each `dataset_*` directory owns its raw-data provenance, structured features,
+model configuration, evaluation results, and report. Shared transformations and
+model helpers live in `common/`. Comparative experiments live in
+`cross_dataset/`, while validation runs are isolated under `validation/`.
 
 ## Raw data is not tracked
 
@@ -32,7 +69,9 @@ before this rule existed, so those files remain in the index and in history —
 | Dataset | OSA label? |
 |---|---|
 | apnea_ecg | **Yes** — record prefix `a*`=apnea, `b*`=borderline, `c*`=control |
+| apnea_hrv | **Yes** — subject/record labels supplied by the source dataset |
 | bioradiolocation | **No** — all 32 subjects have AHI ≤ 4.9, below the AHI ≥ 5 threshold |
+| ucddb_v2 | **Yes** — subject-level OSA outcomes and epoch-level features |
 
 ---
 
